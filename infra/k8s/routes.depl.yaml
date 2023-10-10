@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: routes-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: routes
+  template:
+    metadata:
+      labels:
+        app: routes
+    spec:
+      containers:
+        - name: routes
+          image: phobopt/routes
+          env: 
+            - name: NATS_URL
+              value: 'http://nats-srv:4222'
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NATS_CLUSTER_ID
+              value: 'orders'
+            - name: MONGO_URI
+              value: mongodb://routes-mongo-srv:27017/routes
+            - name: JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_KEY
+            - name: OPENCAGE_API_KEY
+              value: 46325083734f434c81942f4f8eafeac7
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: routes-srv
+spec:
+  selector:
+    app: routes
+  ports:
+    - name: routes
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+      
